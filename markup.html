@@ -1,4 +1,4 @@
-<form>
+<form onsubmit="app.Update()">
     <table>
         <tr>
             <th>First name</th>
@@ -25,5 +25,97 @@
             <td><input type="text" name="people[][surname]" value="Sawyer" /></td>
         </tr>
     </table>
-    <input type="submit" value="OK" />
+    <input type="submit" value="SAVE" />
+    <input type="button" value="ADD" onClick = "app.Add()"/>
+    <input type="button" value="DELETE" onClick = "app.Delete()" />
 </form>
+
+
+<script>
+
+
+function Person (firstname, surname) {
+    this.firstname = firstname;
+    this.surname = surname;
+};
+
+var app = new function() {
+    this.GetAll = function(){
+        
+        if (typeof(Storage) == "undefined") {
+            alert("Sorry, your browser does not support Web Storage...");
+            return;            
+        }
+
+        // if local storage empty save existing hardcoded entries
+        if (localStorage.getItem("people") == null) {
+            this.Update();
+        }
+        // else populate table from local storage
+        else {
+            //1. remove hardcoded rows
+            var rows = document.querySelectorAll("form table tr");
+            var len = rows.length;
+            for (var i=1; i < len; i++) {
+                rows[i].remove();
+            }
+            //2. add local storage rows
+            var people = JSON.parse(localStorage.getItem("people"));
+
+            people.forEach (function(person){
+                app.AppendRow(person.firstname, person.surname);
+            }); 
+        }
+    };
+    this.Add = function() {
+        app.AppendRow("", "");
+    };
+    this.Update = function() {
+        var people = [];
+        var inputs = document.querySelectorAll("form table input[type=text]");
+
+        var len = inputs.length;
+        for (var i = 0; i < len; i += 2) {
+            var person = new Person(inputs[i].value, inputs[i+1].value);
+            people.push(person);
+        }
+
+        localStorage.setItem("people", JSON.stringify(people));
+    };
+    this.Delete = function() {
+        var lastTr = document.querySelector("form table tr:last-child");
+        lastTr.remove();
+
+    };
+    this.AppendRow = function(firstname, surname) {
+        var table = document.querySelector("form table tbody");
+            table.appendChild(document.createElement("tr"));
+
+        var lastTr = document.querySelector("form table tr:last-child");
+
+        var input1 = document.createElement("input");
+        input1.type = "text";
+        input1.name = "people[][firstname]";
+        input1.value = firstname;
+
+        var input2 = document.createElement("input");
+        input2.type = "text";
+        input2.name = "people[][surname]";
+        input2.value = surname;
+
+        var td1 = document.createElement("TD");
+        td1.appendChild(input1);
+
+        var td2 = document.createElement("TD");
+        td2.appendChild(input2);
+
+        lastTr.appendChild(td1);
+        lastTr.appendChild(td2);
+    }
+}
+
+window.onload = function(e) {
+    app.GetAll();
+}
+
+</script>
